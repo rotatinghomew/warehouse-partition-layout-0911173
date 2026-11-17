@@ -4,13 +4,14 @@
 
 ## 数据契约
 
-事件时间为有时区的ISO8601，存储规范化为UTC。现有物理分区为UTC自然日，查询区间左闭右开，地区筛选中的None代表空地区。清单而非目录遍历决定可见文件。文件选择只是候选裁剪，之后仍执行行级精确过滤，返回selected、skipped及理由用于核对读取范围。
+事件时间为有时区的ISO8601，存储规范化为UTC。历史物理分区为UTC自然日（`utc_day`布局），当前布局按地区与地区业务日分区（`region_biz`，空地区业务日为NULL）；两种布局可在同一表内共存。查询区间左闭右开，地区筛选中的None代表空地区。清单而非目录遍历决定可见文件。文件选择只是候选裁剪，分区信息不足时保守读取，之后仍执行行级精确过滤，并按event_id防御性去重；返回selected、skipped及逐文件decisions与理由用于核对读取范围。
 
 ## 代码职责
 
-- `layoutlake/partitioning.py`：UTC事件规范化与自然日分区。
-- `layoutlake/manifest.py`：批次、文件统计与固定版本。
-- `layoutlake/scan.py`：候选文件选择及行级精确过滤。
+- `layoutlake/partitioning.py`：UTC事件规范化、地区业务日与业务日UTC边界。
+- `layoutlake/layouts.py`：两种布局的物理目录约定与分组键。
+- `layoutlake/manifest.py`：批次、文件统计、血缘、迁移状态、生效布局与固定版本。
+- `layoutlake/scan.py`：按文件清单身份做保守候选选择及行级精确过滤。
 - `layoutlake/storage.py`：本地事务、内容摘要和查询工具。
 
 ## 安装与运行
